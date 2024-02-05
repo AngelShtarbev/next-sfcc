@@ -1,19 +1,28 @@
 'use client';
 
-import ProductQuickview from "./ProductQuickview";
+import { useState } from 'react';
+import ProductQuickview from './ProductQuickview';
 
 export default function Product({ product }) {
     
-    const handleOpenQuickviewOpen = () => {
-        alert('Product Quickview');
+    let [isOpen, setIsOpen] = useState(false);
+    const colors = product.variationAttributes.find(variationAttribute => variationAttribute.id === 'color');
+    
+    const handleOpenQuickview = () => {
+        setIsOpen(true);
     };
     
     return (
         <div className="group relative">
-            <div className="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-80">
+            <div className="aspect-h-4 aspect-w-4 overflow-hidden rounded-lg bg-gray-100">
                 <img src={product.image.link} alt={product.image.alt}
                     className="h-full w-full object-cover object-center lg:h-full lg:w-full"
                 />
+                <div className="flex items-end p-4">
+                    <button type="button" onClick={handleOpenQuickview} className="relative z-10 w-full rounded-md bg-[#E7E8EF] bg-opacity-95 px-4 py-2 text-sm text-gray-900 opacity-0 focus:opacity-100 group-hover:opacity-100">
+                        Quick View
+                    </button>
+                </div>
             </div>
             <div className="mt-4 flex justify-between">
                 <div>
@@ -23,14 +32,14 @@ export default function Product({ product }) {
                             {product.productName}
                         </a>
                     </h3>
-                    <p className="mt-1 text-sm text-gray-500">{product.variationAttributes[0].values[0].name}</p>
+                    {colors !== undefined && colors.values !== undefined &&
+                        Object.keys(colors.values).map((key) => (
+                            <p key={key} className="mt-1 text-sm text-gray-500">{colors.values[key].name}</p>
+                        ))}
                 </div>
                 <p className="text-sm font-medium text-gray-900">${product.price.toFixed(2)}</p>
             </div>
-            <button type="button" onClick={handleOpenQuickviewOpen} className="relative z-10 w-full rounded-md bg-white bg-opacity-75 px-4 py-2 text-sm text-gray-900 opacity-0 focus:opacity-100 group-hover:opacity-100">
-                Quick View
-            </button>
-            <ProductQuickview key={product.productId} productData={product} />
+            <ProductQuickview isOpen={isOpen} setIsOpen={setIsOpen} product={product} />
         </div>
     );
 }

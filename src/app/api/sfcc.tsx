@@ -1,10 +1,11 @@
-const CryptoJS = require('crypto-js');
+import sha256 from 'crypto-js/sha256';
+import Base64 from 'crypto-js/enc-base64';
 
 const generateCodeVerifier = async () => {
     return generateRandomString(96);
 }
 
-const generateRandomString = async (length: number) => {
+const generateRandomString = async (length: any) => {
     var text = "";
     var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     for (var i = 0; i < length; i++) {
@@ -13,12 +14,12 @@ const generateRandomString = async (length: number) => {
     return text;
 }
 
-const generateCodeChallenge = async (code_verifier: string)  => {
-    return CryptoJS.SHA256(code_verifier);
+const generateCodeChallenge = async (code_verifier: any)  => {
+    return sha256(code_verifier);
 }
 
-const base64URL = async (verifierStr: string) => {
-    return verifierStr.toString(CryptoJS.enc.Base64).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_')
+const base64URL = async (verifierStr: any) => {
+    return verifierStr.toString(Base64).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_')
 }
 
 const getAuthorize = async () => {
@@ -94,29 +95,33 @@ const getAccessToken = async (authData: any) => {
 };
 
 
-const productSearch = async (searchQuery: string) => {
-    const authData = await getAuthorize();
-    const accessTokenData = await getAccessToken(authData);
-    const accessToken = accessTokenData.access_token;
+const productSearch = async (productSearchConfig: object) => {
+    try {
+        const authData = await getAuthorize();
+        const accessTokenData = await getAccessToken(authData);
+        const accessToken = accessTokenData.access_token;
+        
+        const siteId = process.env.SFCC_SITEID;
+        const organizationId = process.env.SFCC_ORGANIZATIONID;
+        const host = process.env.SFCC_HOST;
+        let url = `${host}/search/shopper-search/v1/organizations/${organizationId}/product-search?siteId=${siteId}&q=${productSearchConfig.searchQuery}`;
 
-    const siteId = process.env.SFCC_SITEID;
-    const organizationId = process.env.SFCC_ORGANIZATIONID;
-    const host = process.env.SFCC_HOST;
-    const url = `${host}/search/shopper-search/v1/organizations/${organizationId}/product-search?siteId=${siteId}&q=${searchQuery}`;
+        const headers = new Headers();
+        headers.append('Content-Type', 'application/json');
+        headers.append('Authorization', `Bearer ${accessToken}`);
 
-    const headers = new Headers();
-    headers.append('Content-Type', 'application/json');
-    headers.append('Authorization', `Bearer ${accessToken}`);
+        const requestConfig = {
+            method: 'GET',
+            headers: headers,
+            redirect: 'manual'
+        };
 
-    const requestConfig = {
-        method: 'GET',
-        headers: headers,
-        redirect: 'manual'
-    };
-
-    const response = await fetch(url, requestConfig);
-    const responseJson = await response.json();
-    return responseJson.hits;
+        const response = await fetch(url, requestConfig);
+        const responseJson = await response.json();
+        return responseJson.hits !== undefined ? responseJson.hits : [];
+    } catch (e) {
+        return [];
+    }
 };
 
 export { productSearch };
