@@ -2,7 +2,7 @@
 
 import Filters from "../components/Filters";
 
-export default function ProductsGrid({ products }) {
+export default function ProductsGrid({ products }: {products: any}) {
     return (
         <Filters productsGrid={products}/>
     );

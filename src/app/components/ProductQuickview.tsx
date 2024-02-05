@@ -21,10 +21,10 @@ function classNames(...classes: any) {
     return classes.filter(Boolean).join(' ')
 }
 
-function ProductQuickview({ isOpen, setIsOpen, product }) {
+function ProductQuickview({ isOpen, setIsOpen, product }: {isOpen: boolean, setIsOpen: any, product: any}) {
     
-    const sizes = product.variationAttributes.find(variationAttribute => variationAttribute.id === 'size');
-    const colors = product.variationAttributes.find(variationAttribute => variationAttribute.id === 'color');
+    const sizes = product.variationAttributes.find((variationAttribute: { id: string; }) => variationAttribute.id === 'size');
+    const colors = product.variationAttributes.find((variationAttribute: { id: string; }) => variationAttribute.id === 'color');
     
     const hookSelectedSize = sizes !== undefined && sizes.values !== undefined ? sizes.values[sizes.values.length - 1] : {};
     const hookSelectedColor = colors !== undefined && colors.values !== undefined ? colors.values[colors.values.length - 1] : {};

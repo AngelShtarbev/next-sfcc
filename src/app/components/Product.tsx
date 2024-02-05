@@ -3,10 +3,10 @@
 import { useState } from 'react';
 import ProductQuickview from './ProductQuickview';
 
-export default function Product({ product }) {
+export default function Product({ product }: {product: any}) {
     
     let [isOpen, setIsOpen] = useState(false);
-    const colors = product.variationAttributes.find(variationAttribute => variationAttribute.id === 'color');
+    const colors = product.variationAttributes.find((variationAttribute: { id: string; }) => variationAttribute.id === 'color');
     
     const handleOpenQuickview = () => {
         setIsOpen(true);

@@ -40,7 +40,7 @@ function classNames(...classes: any) {
     return classes.filter(Boolean).join(' ')
 }
 
-export default function Filters({ productsGrid }) {
+export default function Filters({ productsGrid }: {productsGrid: any}) {
     const [products, setProducts] = useState(productsGrid);
     const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
     const [isChecked, setIsChecked] = useState(false);

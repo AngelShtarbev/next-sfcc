@@ -1,5 +1,4 @@
-import sha256 from 'crypto-js/sha256';
-import Base64 from 'crypto-js/enc-base64';
+const CryptoJS = require('crypto-js');
 
 const generateCodeVerifier = async () => {
     return generateRandomString(96);
@@ -15,11 +14,11 @@ const generateRandomString = async (length: any) => {
 }
 
 const generateCodeChallenge = async (code_verifier: any)  => {
-    return sha256(code_verifier);
+    return CryptoJS.SHA256(code_verifier);
 }
 
 const base64URL = async (verifierStr: any) => {
-    return verifierStr.toString(Base64).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_')
+    return verifierStr.toString(CryptoJS.enc.Base64).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_')
 }
 
 const getAuthorize = async () => {
@@ -37,24 +36,24 @@ const getAuthorize = async () => {
     const headers = new Headers();
     headers.append('Content-Type', 'application/x-www-form-urlencoded');
 
-    const requestConfig = {
+    const response = await fetch(url, {
         method: 'GET',
         headers: headers,
         redirect: 'manual'
-    };
-    
-    const response = await fetch(url, requestConfig);
+    });
+
+    const responseHeaders: any = response.headers;
 
     switch (response.status) {
         case 200:
-            var responseJson = await response.json();
+            const responseJson = await response.json();
             code = responseJson.code || responseJson.authCode;
             usid = responseJson.usid;
         case 303:
-            let location = response.headers.get('Location').split('?');
-            let params = location[1].split('&');
-            code = params.pop().substring(5);
-            usid = params.pop().substring(5);
+            let headersLocation = responseHeaders.get('Location').split('?');
+            let locationParams = headersLocation[1].split('&');
+            code = locationParams.pop().substring(5);
+            usid = locationParams.pop().substring(5);
     }
     
     return { code, usid, verifier };
@@ -62,12 +61,12 @@ const getAuthorize = async () => {
 
 
 const getAccessToken = async (authData: any) => {
-    const redirectUrl = process.env.SFCC_REDIRECT_URL;
-    const host = process.env.SFCC_HOST;
-    const organizationId = process.env.SFCC_ORGANIZATIONID;
-    const verifier = authData.verifier;
-    const channelId = process.env.SFCC_SITEID;
-    const clientId = process.env.SFCC_CLIENT_ID;
+    const redirectUrl: any = process.env.SFCC_REDIRECT_URL;
+    const host: any = process.env.SFCC_HOST;
+    const organizationId: any = process.env.SFCC_ORGANIZATIONID;
+    const verifier: any = authData.verifier;
+    const channelId: any = process.env.SFCC_SITEID;
+    const clientId: any = process.env.SFCC_CLIENT_ID;
 
     const url = `${host}/shopper/auth/v1/organizations/${organizationId}/oauth2/token`;
     const headers = new Headers();
@@ -82,20 +81,19 @@ const getAccessToken = async (authData: any) => {
     urlencoded.append('client_id', clientId);
     urlencoded.append('usid', authData.usid);
 
-    const requestConfig = {
+    const response = await fetch(url, {
         method: 'POST',
         headers: headers,
         body: urlencoded,
         redirect: 'manual'
-    };
+    });
 
-    const response = await fetch(url, requestConfig);
     const responseJson = await response.json();
     return responseJson;
 };
 
 
-const productSearch = async (productSearchConfig: object) => {
+const productSearch = async (productSearchConfig: any) => {
     try {
         const authData = await getAuthorize();
         const accessTokenData = await getAccessToken(authData);
@@ -110,13 +108,12 @@ const productSearch = async (productSearchConfig: object) => {
         headers.append('Content-Type', 'application/json');
         headers.append('Authorization', `Bearer ${accessToken}`);
 
-        const requestConfig = {
+        const response = await fetch(url, {
             method: 'GET',
             headers: headers,
             redirect: 'manual'
-        };
-
-        const response = await fetch(url, requestConfig);
+        });
+        
         const responseJson = await response.json();
         return responseJson.hits !== undefined ? responseJson.hits : [];
     } catch (e) {
