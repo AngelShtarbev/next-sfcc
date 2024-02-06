@@ -10,7 +10,7 @@ export default async function Products() {
         searchQuery: 'Shirt'
     };
     
-    const products = await productSearch(productSearchConfig);
+    const productSearchResults = await productSearch(productSearchConfig);
 
     return (
       <>
@@ -19,7 +19,7 @@ export default async function Products() {
             <div className="bg-white">
                 <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6 sm:py-24 lg:max-w-7xl lg:px-8">
                     <Suspense fallback={<Loading />}>
-                        <ProductsGrid products={products} />
+                        <ProductsGrid products={productSearchResults} />
                     </Suspense>
                 </div>
             </div>

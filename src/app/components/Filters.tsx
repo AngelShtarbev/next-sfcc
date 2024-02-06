@@ -5,6 +5,7 @@ import { Dialog, Disclosure, Menu, Transition } from '@headlessui/react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { ChevronDownIcon, FunnelIcon, MinusIcon, PlusIcon, Squares2X2Icon } from '@heroicons/react/20/solid';
 import Product from '../components/Product';
+import FiltersRequest from '../components/FiltersRequest';
 
 const sortOptions = [
     { name: 'Most Popular', href: '#', current: true },
@@ -19,8 +20,8 @@ const filters = [
         id: 'price',
         name: 'Price',
         options: [
-            { value: '0-50', label: '$0 to $50', checked: false },
-            { value: '50-160', label: '$50 to $160', checked: false },
+            { value: '0..50', label: '$0 to $50', checked: false },
+            { value: '50..160', label: '$50 to $160', checked: false },
         ],
     },
     {
@@ -31,7 +32,11 @@ const filters = [
             { value: 'S', label: 'S', checked: false },
             { value: 'M', label: 'M', checked: false },
             { value: 'L', label: 'L', checked: false },
-            { value: 'XL', label: '18L', checked: false },
+            { value: 'XL', label: 'XL', checked: false },
+            { value: '15R', label: '15R', checked: false },
+            { value: '16L', label: '16L', checked: false },
+            { value: '16', label: '16', checked: false },
+            { value: '14 1/2', label: '14 1/2', checked: false },
         ],
     },
 ];
@@ -41,14 +46,56 @@ function classNames(...classes: any) {
 }
 
 export default function Filters({ productsGrid }: {productsGrid: any}) {
+    const [isLoading, setIsLoading] = useState(false);
     const [products, setProducts] = useState(productsGrid);
     const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
     const [isChecked, setIsChecked] = useState(false);
 
-    const handleCheckbox = async () => {
+    const loadingBody = <main className="flex min-h-screen flex-col items-center justify-between p-24">
+        <div className="mx-auto mt-10 max-w-xs sm:flex sm:max-w-none sm:justify-center">
+            <h2>Loading...</h2>
+        </div>
+    </main>;
+
+
+    const handleCheckbox = async (event: any) => {
         setIsChecked(!isChecked);
-        // setProducts([]);
-    }
+        if (!isChecked) {
+            setIsLoading(true);
+            const type = event.target.dataset.checboxType;
+            const value = event.target.value;
+            
+            if (type === 'size') {
+                var resultSizes: any = [];
+    
+                products.map((product: { variationAttributes: any; }) => {
+                    let valAttrs = product.variationAttributes;
+                    valAttrs.map((inner: { values: any[]; }) => {
+                        let isFound = inner.values.find((variationAttribute) => variationAttribute.name === value);
+                        if (isFound) {
+                            resultSizes.push(product);
+                        }
+                    })
+                });
+    
+                setProducts(resultSizes);
+                setIsLoading(false);
+            } else if (type === 'price') {
+                const requestParams = {
+                    searchQuery: 'Shirt',
+                    refinementValue: value,
+                    type: type,
+                };
+    
+                const filtersRequestResults = await FiltersRequest(requestParams);
+                setProducts(filtersRequestResults.data);
+                setIsLoading(false);
+            }
+
+        } else {
+            setProducts(productsGrid);
+        }
+    };
 
     return (
         <div className="bg-white">
@@ -118,6 +165,7 @@ export default function Filters({ productsGrid }: {productsGrid: any}) {
                                                                             name={`${section.id}[]`}
                                                                             defaultValue={option.value}
                                                                             type="checkbox"
+                                                                            data-checbox-type={section.id}
                                                                             defaultChecked={isChecked}
                                                                             // checked={isChecked}
                                                                             onChange={handleCheckbox}
@@ -239,6 +287,7 @@ export default function Filters({ productsGrid }: {productsGrid: any}) {
                                                                     id={`filter-${section.id}-${optionIdx}`}
                                                                     name={`${section.id}[]`}
                                                                     defaultValue={option.value}
+                                                                    data-checbox-type={section.id}
                                                                     type="checkbox"
                                                                     defaultChecked={option.checked}
                                                                     // checked={isChecked}
@@ -263,9 +312,13 @@ export default function Filters({ productsGrid }: {productsGrid: any}) {
 
                             {/* Product grid */}
                             <div className="lg:col-span-3">
+                                {isLoading ? loadingBody : null}
                                 {products.length > 0 ?
-                                    <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8">{products.map((product: any) => <Product key={product.productId} product={product} />)}</div> :
-                                    <h2>We are sorry! No products can be displayed at this time.</h2>}
+                                    <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8">{products.map((product: any) => <Product key={product.productId} product={product} />)}</div>:
+                                    <div className="mx-auto mt-10 max-w-xs sm:flex sm:max-w-none sm:justify-center">
+                                        <h2>We are sorry! No products can be displayed at this time.</h2>
+                                    </div>
+                                }
                             </div>
                         </div>
                     </section>

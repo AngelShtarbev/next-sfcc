@@ -104,6 +104,10 @@ const productSearch = async (productSearchConfig: any) => {
         const host = process.env.SFCC_HOST;
         let url = `${host}/search/shopper-search/v1/organizations/${organizationId}/product-search?siteId=${siteId}&q=${productSearchConfig.searchQuery}`;
 
+        if (productSearchConfig.refinements !== undefined) {
+            url += `&refine=${productSearchConfig.refinements}`;
+        }
+
         const headers = new Headers();
         headers.append('Content-Type', 'application/json');
         headers.append('Authorization', `Bearer ${accessToken}`);
@@ -117,6 +121,7 @@ const productSearch = async (productSearchConfig: any) => {
         const responseJson = await response.json();
         return responseJson.hits !== undefined ? responseJson.hits : [];
     } catch (e) {
+        // console.error(e);
         return [];
     }
 };
