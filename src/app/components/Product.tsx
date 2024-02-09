@@ -5,7 +5,7 @@ import ProductQuickview from './ProductQuickview';
 
 export default function Product({ product }: {product: any}) {
     
-    let [isOpen, setIsOpen] = useState(false);
+    const [isOpen, setIsOpen] = useState(false);
     const colors = product.variationAttributes.find((variationAttribute: { id: string; }) => variationAttribute.id === 'color');
     
     const handleOpenQuickview = () => {

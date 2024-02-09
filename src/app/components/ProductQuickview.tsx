@@ -6,7 +6,7 @@ import { XMarkIcon } from '@heroicons/react/24/outline';
 import { StarIcon } from '@heroicons/react/20/solid';
 
 
-let productView = {
+const productView = {
     rating: 3.9,
     reviewCount: 117,
     href: '#',
@@ -17,11 +17,11 @@ let productView = {
     ]
 };
 
-function classNames(...classes: any) {
+const classNames = (...classes: any) => {
     return classes.filter(Boolean).join(' ')
-}
+};
 
-function ProductQuickview({ isOpen, setIsOpen, product }: {isOpen: boolean, setIsOpen: any, product: any}) {
+export default function ProductQuickview({ isOpen, setIsOpen, product }: {isOpen: boolean, setIsOpen: any, product: any}) {
     
     const sizes = product.variationAttributes.find((variationAttribute: { id: string; }) => variationAttribute.id === 'size');
     const colors = product.variationAttributes.find((variationAttribute: { id: string; }) => variationAttribute.id === 'color');
@@ -220,6 +220,4 @@ function ProductQuickview({ isOpen, setIsOpen, product }: {isOpen: boolean, setI
             </Dialog>
         </Transition.Root>
     );
-}
-
-export default ProductQuickview;
+};

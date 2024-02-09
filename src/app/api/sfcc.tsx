@@ -1,78 +1,78 @@
+import { ProductHits, AuthorizeResponse, AuthorizeJson, ProductHit, GetAccessToken, ProductSearch } from '../types/interface';
 const CryptoJS = require('crypto-js');
 
-const generateCodeVerifier = async () => {
+const generateCodeVerifier = async (): Promise<string> => {
     return generateRandomString(96);
-}
+};
 
-const generateRandomString = async (length: any) => {
-    var text = "";
-    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    for (var i = 0; i < length; i++) {
+const generateRandomString = async (length: number): Promise<string> => {
+    let text: string = '';
+    const possible: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    for (let i: number = 0; i < length; i++) {
         text += possible.charAt(Math.floor(Math.random() * possible.length));
     }
     return text;
-}
+};
 
-const generateCodeChallenge = async (code_verifier: any)  => {
+const generateCodeChallenge = async (code_verifier: string): Promise<string>  => {
     return CryptoJS.SHA256(code_verifier);
-}
+};
 
-const base64URL = async (verifierStr: any) => {
+const base64URL = async (verifierStr: any): Promise<string> => {
     return verifierStr.toString(CryptoJS.enc.Base64).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_')
-}
+};
 
-const getAuthorize = async () => {
-    let code: any, usid: any;
-    const host = process.env.SFCC_HOST;
-    const organizationId = process.env.SFCC_ORGANIZATIONID;
-    const redirectUrl = process.env.SFCC_REDIRECT_URL;
-    const clientId = process.env.SFCC_CLIENT_ID;
+const getAuthorize = async (): Promise<GetAccessToken> => {
+    let code: string = '', usid: string = '';
+    const host: string = process.env.SFCC_HOST ? process.env.SFCC_HOST : '';
+    const organizationId: string = process.env.SFCC_ORGANIZATIONID ? process.env.SFCC_ORGANIZATIONID : '';
+    const redirectUrl: string = process.env.SFCC_REDIRECT_URL ? process.env.SFCC_REDIRECT_URL : '';
+    const clientId: string = process.env.SFCC_CLIENT_ID ? process.env.SFCC_CLIENT_ID : '';
     
-    const verifier = await base64URL(await generateCodeVerifier());
-    const codeChallenge = await base64URL(await generateCodeChallenge(verifier));
+    const verifier: string = await base64URL(await generateCodeVerifier());
+    const codeChallenge: string = await base64URL(await generateCodeChallenge(verifier));
 
-    const url = `${host}/shopper/auth/v1/organizations/${organizationId}/oauth2/authorize?redirect_uri=${redirectUrl}&response_type=code&client_id=${clientId}&hint=guest&code_challenge=${codeChallenge}`;
+    const url: string = `${host}/shopper/auth/v1/organizations/${organizationId}/oauth2/authorize?redirect_uri=${redirectUrl}&response_type=code&client_id=${clientId}&hint=guest&code_challenge=${codeChallenge}`;
     
-    const headers = new Headers();
+    const headers: Headers = new Headers();
     headers.append('Content-Type', 'application/x-www-form-urlencoded');
 
-    const response = await fetch(url, {
+    const response: AuthorizeResponse = await fetch(url, {
         method: 'GET',
         headers: headers,
         redirect: 'manual'
     });
 
-    const responseHeaders: any = response.headers;
-
     switch (response.status) {
         case 200:
-            const responseJson = await response.json();
+            const responseJson: AuthorizeJson = await response.json();
             code = responseJson.code || responseJson.authCode;
             usid = responseJson.usid;
         case 303:
+            const responseHeaders = response.headers;
             let headersLocation = responseHeaders.get('Location').split('?');
             let locationParams = headersLocation[1].split('&');
             code = locationParams.pop().substring(5);
             usid = locationParams.pop().substring(5);
     }
     
-    return { code, usid, verifier };
+    return { verifier, code, usid };
 };
 
 
-const getAccessToken = async (authData: any) => {
-    const redirectUrl: any = process.env.SFCC_REDIRECT_URL;
-    const host: any = process.env.SFCC_HOST;
-    const organizationId: any = process.env.SFCC_ORGANIZATIONID;
-    const verifier: any = authData.verifier;
-    const channelId: any = process.env.SFCC_SITEID;
-    const clientId: any = process.env.SFCC_CLIENT_ID;
+const getAccessToken = async (authData: GetAccessToken): Promise<any> => {
+    const redirectUrl: string = process.env.SFCC_REDIRECT_URL ? process.env.SFCC_REDIRECT_URL : '';
+    const host: string = process.env.SFCC_HOST ? process.env.SFCC_HOST : '';
+    const organizationId: string = process.env.SFCC_ORGANIZATIONID ? process.env.SFCC_ORGANIZATIONID : '';
+    const channelId: string = process.env.SFCC_SITEID ? process.env.SFCC_SITEID : '';
+    const clientId: string = process.env.SFCC_CLIENT_ID ? process.env.SFCC_CLIENT_ID : '';
+    const verifier: string = authData.verifier;
 
-    const url = `${host}/shopper/auth/v1/organizations/${organizationId}/oauth2/token`;
-    const headers = new Headers();
+    const url: string = `${host}/shopper/auth/v1/organizations/${organizationId}/oauth2/token`;
+    const headers: Headers = new Headers();
     headers.append('Content-Type', 'application/x-www-form-urlencoded');
 
-    const urlencoded = new URLSearchParams();
+    const urlencoded: URLSearchParams = new URLSearchParams();
     urlencoded.append('code', authData.code);
     urlencoded.append('grant_type', 'authorization_code_pkce');
     urlencoded.append('redirect_uri', redirectUrl);
@@ -81,34 +81,34 @@ const getAccessToken = async (authData: any) => {
     urlencoded.append('client_id', clientId);
     urlencoded.append('usid', authData.usid);
 
-    const response = await fetch(url, {
+    const response: Response = await fetch(url, {
         method: 'POST',
         headers: headers,
         body: urlencoded,
         redirect: 'manual'
     });
 
-    const responseJson = await response.json();
+    const responseJson: any = await response.json();
     return responseJson;
 };
 
 
-const productSearch = async (productSearchConfig: any) => {
+const productSearch = async (productSearchConfig: ProductSearch): Promise<Array<object>> => {
     try {
-        const authData = await getAuthorize();
-        const accessTokenData = await getAccessToken(authData);
-        const accessToken = accessTokenData.access_token;
+        const authData: GetAccessToken = await getAuthorize();
+        const accessTokenData: any = await getAccessToken(authData);
+        const accessToken: string = accessTokenData.access_token;
         
-        const siteId = process.env.SFCC_SITEID;
-        const organizationId = process.env.SFCC_ORGANIZATIONID;
-        const host = process.env.SFCC_HOST;
-        let url = `${host}/search/shopper-search/v1/organizations/${organizationId}/product-search?siteId=${siteId}&q=${productSearchConfig.searchQuery}`;
+        const siteId: string = process.env.SFCC_SITEID ? process.env.SFCC_SITEID : '';
+        const organizationId: string = process.env.SFCC_ORGANIZATIONID ? process.env.SFCC_ORGANIZATIONID : '';
+        const host: string = process.env.SFCC_HOST ? process.env.SFCC_HOST : '';
+        let url: string = `${host}/search/shopper-search/v1/organizations/${organizationId}/product-search?siteId=${siteId}&q=${productSearchConfig.searchQuery}`;
 
-        if (productSearchConfig.refinements !== undefined) {
+        if (productSearchConfig.refinements !== '') {
             url += `&refine=${productSearchConfig.refinements}`;
         }
 
-        const headers = new Headers();
+        const headers: Headers = new Headers();
         headers.append('Content-Type', 'application/json');
         headers.append('Authorization', `Bearer ${accessToken}`);
 
@@ -118,8 +118,9 @@ const productSearch = async (productSearchConfig: any) => {
             redirect: 'manual'
         });
         
-        const responseJson = await response.json();
-        return responseJson.hits !== undefined ? responseJson.hits : [];
+        const responseJson: ProductHits = await response.json();
+        const responseJsonHits: [ProductHit] = responseJson.hits;
+        return responseJsonHits !== undefined ? responseJsonHits : [];
     } catch (e) {
         // console.error(e);
         return [];

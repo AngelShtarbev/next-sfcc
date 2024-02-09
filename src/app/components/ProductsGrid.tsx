@@ -1,6 +1,6 @@
 'use client';
 
-import Filters from "../components/Filters";
+import Filters from '../components/Filters';
 
 export default function ProductsGrid({ products }: {products: any}) {
     return (

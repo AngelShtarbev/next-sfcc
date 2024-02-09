@@ -6,4 +6,4 @@ export default function Footer() {
             <p>Powered by Next.js, Tailwind, Salesforce Commerce Cloud, and Vercel</p>
         </footer>
     );
-}
+};
